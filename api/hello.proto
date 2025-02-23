@@ -5,7 +5,10 @@ option go_package = "pkg/grpc";
 package myapp;
 
 service GreetingService {
-  rpc Hello (HelloRequest) returns (HelloResponse) {}
+  // Unary RPC
+  rpc Hello (HelloRequest) returns (HelloResponse);
+  // Server streaming RPC
+  rpc HelloServerStream (HelloRequest) returns (stream HelloResponse);
 }
 
 message HelloRequest {
