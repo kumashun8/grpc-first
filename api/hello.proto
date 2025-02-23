@@ -12,7 +12,7 @@ service GreetingService {
   // Client streaming RPC
   rpc HelloClientStream (stream HelloRequest) returns (HelloResponse);
   // Bidirectional streaming RPC
-  rpc HelloBidirectionalStream (stream HelloRequest) returns (stream HelloResponse);
+  rpc HelloBiStreams (stream HelloRequest) returns (stream HelloResponse);
 }
 
 message HelloRequest {
