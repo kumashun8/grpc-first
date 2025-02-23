@@ -45,7 +45,8 @@ func main() {
 		fmt.Println("1: send Request")
 		fmt.Println("2: HelloServerStream")
 		fmt.Println("3: HelloClientStream")
-		fmt.Println("4: exit")
+		fmt.Println("4: HelloBiStreams")
+		fmt.Println("5: exit")
 		fmt.Print("please enter > ")
 
 		scanner.Scan()
@@ -59,6 +60,8 @@ func main() {
 		case "3":
 			HelloClientStream()
 		case "4":
+			HelloBiStreams()
+		case "5":
 			fmt.Println("bye")
 			goto M
 		}
@@ -140,5 +143,53 @@ func HelloClientStream() {
 		return
 	} else {
 		fmt.Println(res.GetMessage())
+	}
+}
+
+func HelloBiStreams() {
+	stream, err := client.HelloBiStreams(context.Background())
+	if err != nil {
+		fmt.Println("error: ", err)
+		return
+	}
+
+	sendNum := 5
+	fmt.Printf("Please enter %d names\n", sendNum)
+
+	var sendEnd, recvEnd bool
+	sendCount := 0
+	for !(sendEnd && recvEnd) {
+		if !sendEnd {
+			scanner.Scan()
+			name := scanner.Text()
+
+			sendCount++
+			req := &hellopb.HelloRequest{
+				Name: name,
+			}
+			if err := stream.Send(req); err != nil {
+				fmt.Println("error: ", err)
+				sendEnd = true
+			}
+
+			if sendCount == sendNum {
+				sendEnd = true
+				if err := stream.CloseSend(); err != nil {
+					fmt.Println("error: ", err)
+				}
+			}
+		}
+
+		if !recvEnd {
+			res, err := stream.Recv()
+			if errors.Is(err, io.EOF) {
+				recvEnd = true
+				continue
+			}
+			if err != nil {
+				fmt.Println("error: ", err)
+			}
+			fmt.Println(res.GetMessage())
+		}
 	}
 }
