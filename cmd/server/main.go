@@ -2,11 +2,14 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	hellopb "myrpc/pkg/grpc"
@@ -36,6 +39,23 @@ func (s *myServer) HelloServerStream(req *hellopb.HelloRequest, stream hellopb.G
 		time.Sleep(1 * time.Second)
 	}
 	return nil
+}
+
+func (s *myServer) HelloClientStream(stream hellopb.GreetingService_HelloClientStreamServer) error {
+	nameList := make([]string, 0)
+	for {
+		req, err := stream.Recv()
+		if errors.Is(err, io.EOF) {
+			message := fmt.Sprintf("Hello, %s!", strings.Join(nameList, ", "))
+			return stream.SendAndClose(&hellopb.HelloResponse{
+				Message: message,
+			})
+		}
+		if err != nil {
+			return err
+		}
+		nameList = append(nameList, req.GetName())
+	}
 }
 
 func NewMyServer() *myServer {
