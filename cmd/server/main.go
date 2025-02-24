@@ -14,11 +14,8 @@ import (
 
 	hellopb "myrpc/pkg/grpc"
 
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
-	"google.golang.org/grpc/status"
 )
 
 type myServer struct {
@@ -26,14 +23,14 @@ type myServer struct {
 }
 
 func (s *myServer) Hello(ctx context.Context, req *hellopb.HelloRequest) (*hellopb.HelloResponse, error) {
-	// return &hellopb.HelloResponse{
-	// 	Message: fmt.Sprintf("Hello, %s!", req.GetName()),
-	// }, nil
-	stat := status.New(codes.Unknown, "unknown error occurred")
-	stat, _ = stat.WithDetails(&errdetails.DebugInfo{
-		Detail: "this is a debug info",
-	})
-	return nil, stat.Err()
+	return &hellopb.HelloResponse{
+		Message: fmt.Sprintf("Hello, %s!", req.GetName()),
+	}, nil
+	// stat := status.New(codes.Unknown, "unknown error occurred")
+	// stat, _ = stat.WithDetails(&errdetails.DebugInfo{
+	// 	Detail: "this is a debug info",
+	// })
+	// return nil, stat.Err()
 }
 
 func (s *myServer) HelloServerStream(req *hellopb.HelloRequest, stream hellopb.GreetingService_HelloServerStreamServer) error {
