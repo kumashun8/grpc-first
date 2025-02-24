@@ -13,6 +13,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	_ "google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -82,8 +83,12 @@ func Hello() {
 	req := &hellopb.HelloRequest{
 		Name: name,
 	}
+	ctx := context.Background()
+	md := metadata.New(map[string]string{"type": "unary", "from": "client"})
+	ctx = metadata.NewOutgoingContext(ctx, md)
 
-	res, err := client.Hello(context.Background(), req)
+	var header, trailer metadata.MD
+	res, err := client.Hello(ctx, req, grpc.Header(&header), grpc.Trailer(&trailer))
 	if err != nil {
 		if stat, ok := status.FromError(err); ok {
 			fmt.Printf("code: %v\n", stat.Code())
@@ -93,6 +98,8 @@ func Hello() {
 			fmt.Println("error: ", err)
 		}
 	} else {
+		fmt.Println("header: ", header)
+		fmt.Println("trailer: ", trailer)
 		fmt.Println(res.GetMessage())
 	}
 }
@@ -158,7 +165,11 @@ func HelloClientStream() {
 }
 
 func HelloBiStreams() {
-	stream, err := client.HelloBiStreams(context.Background())
+	ctx := context.Background()
+	md := metadata.New(map[string]string{"type": "stream", "from": "client"})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+
+	stream, err := client.HelloBiStreams(ctx)
 	if err != nil {
 		fmt.Println("error: ", err)
 		return
@@ -168,6 +179,7 @@ func HelloBiStreams() {
 	fmt.Printf("Please enter %d names\n", sendNum)
 
 	var sendEnd, recvEnd bool
+	var headerMD metadata.MD
 	sendCount := 0
 	for !(sendEnd && recvEnd) {
 		if !sendEnd {
@@ -192,6 +204,15 @@ func HelloBiStreams() {
 		}
 
 		if !recvEnd {
+			if headerMD == nil {
+				// block until the header is received
+				headerMD, err = stream.Header()
+				if err != nil {
+					fmt.Println("error: ", err)
+				} else {
+					fmt.Println("header: ", headerMD)
+				}
+			}
 			res, err := stream.Recv()
 			if errors.Is(err, io.EOF) {
 				recvEnd = true
@@ -202,5 +223,8 @@ func HelloBiStreams() {
 			}
 			fmt.Println(res.GetMessage())
 		}
+
+		trailerMD := stream.Trailer()
+		fmt.Println("trailer: ", trailerMD)
 	}
 }
