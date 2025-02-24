@@ -96,6 +96,7 @@ func main() {
 
 	s := grpc.NewServer(
 		grpc.UnaryInterceptor(myUnaryServerInterceptor1),
+		grpc.StreamInterceptor(myStreamServerInterceptor1),
 	)
 
 	// Register the service
