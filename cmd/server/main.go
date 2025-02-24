@@ -94,7 +94,9 @@ func main() {
 		panic(err)
 	}
 
-	s := grpc.NewServer()
+	s := grpc.NewServer(
+		grpc.UnaryInterceptor(myUnaryServerInterceptor1),
+	)
 
 	// Register the service
 	hellopb.RegisterGreetingServiceServer(s, NewMyServer())
