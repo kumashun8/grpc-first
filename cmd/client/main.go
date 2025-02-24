@@ -33,6 +33,7 @@ func main() {
 	conn, err := grpc.NewClient(
 		address,
 		grpc.WithUnaryInterceptor(myUnaryClientInterceptor1),
+		grpc.WithStreamInterceptor(myStreamClientInterceptor1),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		//　非同期でコネクション確立を行った方が効率がいいので、 grpc.WithBlock() は非推奨
 		// grpc.WithBlock(),
