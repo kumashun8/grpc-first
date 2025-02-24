@@ -87,7 +87,8 @@ func Hello() {
 	md := metadata.New(map[string]string{"type": "unary", "from": "client"})
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
-	res, err := client.Hello(ctx, req)
+	var header, trailer metadata.MD
+	res, err := client.Hello(ctx, req, grpc.Header(&header), grpc.Trailer(&trailer))
 	if err != nil {
 		if stat, ok := status.FromError(err); ok {
 			fmt.Printf("code: %v\n", stat.Code())
@@ -97,6 +98,8 @@ func Hello() {
 			fmt.Println("error: ", err)
 		}
 	} else {
+		fmt.Println("header: ", header)
+		fmt.Println("trailer: ", trailer)
 		fmt.Println(res.GetMessage())
 	}
 }
@@ -176,6 +179,7 @@ func HelloBiStreams() {
 	fmt.Printf("Please enter %d names\n", sendNum)
 
 	var sendEnd, recvEnd bool
+	var headerMD metadata.MD
 	sendCount := 0
 	for !(sendEnd && recvEnd) {
 		if !sendEnd {
@@ -200,6 +204,15 @@ func HelloBiStreams() {
 		}
 
 		if !recvEnd {
+			if headerMD == nil {
+				// block until the header is received
+				headerMD, err = stream.Header()
+				if err != nil {
+					fmt.Println("error: ", err)
+				} else {
+					fmt.Println("header: ", headerMD)
+				}
+			}
 			res, err := stream.Recv()
 			if errors.Is(err, io.EOF) {
 				recvEnd = true
@@ -210,5 +223,8 @@ func HelloBiStreams() {
 			}
 			fmt.Println(res.GetMessage())
 		}
+
+		trailerMD := stream.Trailer()
+		fmt.Println("trailer: ", trailerMD)
 	}
 }

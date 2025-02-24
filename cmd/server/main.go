@@ -28,6 +28,16 @@ func (s *myServer) Hello(ctx context.Context, req *hellopb.HelloRequest) (*hello
 		log.Printf("metadata: %v", md)
 	}
 
+	headerMD := metadata.New(map[string]string{"type": "unary", "from": "server", "in": "header"})
+	if err := grpc.SetHeader(ctx, headerMD); err != nil {
+		return nil, err
+	}
+
+	trailerMD := metadata.New(map[string]string{"type": "unary", "from": "server", "in": "trailer"})
+	if err := grpc.SetTrailer(ctx, trailerMD); err != nil {
+		return nil, err
+	}
+
 	return &hellopb.HelloResponse{
 		Message: fmt.Sprintf("Hello, %s!", req.GetName()),
 	}, nil
@@ -72,6 +82,14 @@ func (s *myServer) HelloBiStreams(stream hellopb.GreetingService_HelloBiStreamsS
 	if md, ok := metadata.FromIncomingContext(stream.Context()); ok {
 		log.Printf("metadata: %v", md)
 	}
+
+	headerMD := metadata.New(map[string]string{"type": "stream", "from": "server", "in": "header"})
+	if err := stream.SendHeader(headerMD); err != nil {
+		return err
+	}
+
+	trailerMD := metadata.New(map[string]string{"type": "stream", "from": "server", "in": "trailer"})
+	stream.SetTrailer(trailerMD)
 
 	for {
 		req, err := stream.Recv()
