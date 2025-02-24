@@ -4,3 +4,6 @@ tasks:
   build:
     cmds:
       - docker build -t mygrpc .
+  kube-deploy:
+    cmds:
+      - kubectl apply -f k8s -n mygrpc
